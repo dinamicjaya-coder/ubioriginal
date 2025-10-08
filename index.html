@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SnackZone — Nikmatnya ngemil tanpa henti.</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --purple-1:#f4e8ff;
+      --purple-2:#e6d3ff;
+      --accent-1:#9b5de5;
+      --accent-2:#7b35d4;
+      --card-bg:#fff;
+      --muted:#666;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;font-family:'Poppins',sans-serif}
+    body{background:linear-gradient(180deg,var(--purple-1),var(--purple-2));color:#222;min-height:100vh;}
+    /* NAV */
+    nav{position:fixed;top:0;left:0;width:100%;display:flex;justify-content:space-between;align-items:center;padding:12px 6%;background:rgba(255,255,255,0.85);backdrop-filter:blur(6px);z-index:50;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+    .logo{color:var(--accent-2);font-weight:700;font-size:1.2rem}
+    .nav-right{display:flex;gap:14px;align-items:center}
+    .btn-cart{background:linear-gradient(90deg,var(--accent-1),var(--accent-2));color:#fff;border:none;padding:8px 12px;border-radius:12px;cursor:pointer;position:relative}
+    .cart-count{position:absolute;top:-6px;right:-6px;background:#ff5252;color:#fff;font-size:12px;padding:3px 6px;border-radius:999px}
+    a.nav-link{color:var(--accent-2);text-decoration:none;font-weight:500}
+    /* HERO / BANNER */
+    header{margin-top:60px;height:50vh;position:relative;overflow:hidden;border-bottom-left-radius:28px;border-bottom-right-radius:28px}
+    .hero-img{width:100%;height:100%;object-fit:cover;filter:brightness(65%)} /* replace file banner.png */
+    .hero-content{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center;padding:20px}
+    .hero-content h1{font-size:2.6rem;letter-spacing:0.5px;margin-bottom:6px}
+    .hero-content p{margin-top:6px;opacity:0.95;font-size:1.05rem}
+    .hero-content button{margin-top:16px;background:var(--accent-1);border:none;color:#fff;padding:10px 22px;border-radius:24px;cursor:pointer}
+    /* PRODUK SECTION */
+    .produk-section{padding:48px 6%;max-width:1200px;margin:auto}
+    .produk-section h2{color:var(--accent-2);margin-bottom:18px}
+    .kategori-filter{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:22px}
+    .kategori-btn{background:#e9d9ff;border:none;padding:8px 16px;border-radius:999px;color:var(--accent-2);cursor:pointer;font-weight:600}
+    .kategori-btn.active{background:linear-gradient(90deg,var(--accent-1),var(--accent-2));color:#fff;transform:translateY(-2px)}
+    .produk-container{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px}
+    .produk-card{background:var(--card-bg);border-radius:14px;padding:12px;box-shadow:0 6px 18px rgba(0,0,0,0.06);opacity:0;transform:translateY(20px);transition:all .45s ease}
+    .produk-card.visible{opacity:1;transform:translateY(0)}
+    .produk-card img{width:100%;height:160px;object-fit:cover;border-radius:10px}
+    .produk-card h3{color:var(--accent-2);margin:10px 0 6px;font-size:1.05rem}
+    .produk-card p{color:var(--muted);font-size:0.9rem;min-height:36px}
+    .produk-card .price{font-weight:700;color:var(--accent-1);margin-top:8px}
+    .produk-card .controls{display:flex;gap:8px;margin-top:10px;align-items:center}
+    .qty{width:72px;padding:6px;border-radius:8px;border:1px solid #ddd;text-align:center}
+    .add-btn{flex:1;background:linear-gradient(90deg,var(--accent-1),var(--accent-2));color:#fff;border:none;padding:8px;border-radius:10px;cursor:pointer}
+    /* CART MODAL (bottom sheet) */
+    .cart-modal{position:fixed;left:0;right:0;bottom:-110%;height:78vh;background:linear-gradient(180deg,#fff,#fbfaff);border-top-left-radius:18px;border-top-right-radius:18px;box-shadow:0 -10px 30px rgba(0,0,0,0.15);transition:transform .35s ease;z-index:200;padding:18px;display:flex;flex-direction:column}
+    .cart-modal.open{transform:translateY(-100%)}
+    .cart-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+    .cart-header h3{color:var(--accent-2)}
+    .close-cart{background:#eee;border:none;padding:8px 10px;border-radius:8px;cursor:pointer}
+    .cart-body{overflow:auto;padding-right:6px;flex:1}
+    .cart-item{display:flex;gap:10px;align-items:center;padding:10px;border-radius:10px;border:1px solid #f0e9ff;margin-bottom:10px}
+    .cart-item img{width:64px;height:64px;object-fit:cover;border-radius:8px}
+    .cart-item .meta{flex:1}
+    .cart-item .meta b{display:block;color:var(--accent-2)}
+    .cart-item .meta small{color:#666}
+    .cart-item .meta .sub{margin-top:6px;color:#333}
+    .cart-item .meta .qty-controls{display:flex;gap:6px;margin-top:8px;align-items:center}
+    .icon-btn{background:#f0f0f0;border:none;padding:6px;border-radius:6px;cursor:pointer}
+    .cart-footer{padding-top:10px;border-top:1px dashed #eee}
+    .totals{display:flex;justify-content:space-between;margin-bottom:8px;color:#222;font-weight:600}
+    .checkout-form{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+    .checkout-form input{padding:10px;border-radius:8px;border:1px solid #ddd}
+    .checkout-actions{display:flex;gap:10px;margin-top:10px}
+    .btn-primary{flex:1;background:linear-gradient(90deg,var(--accent-1),var(--accent-2));color:#fff;border:none;padding:12px;border-radius:10px;cursor:pointer;font-weight:700}
+    .btn-secondary{background:#f5f5f5;border:none;padding:12px;border-radius:10px;cursor:pointer}
+    footer{padding:18px;text-align:center;color:#fff;background:linear-gradient(90deg,var(--accent-1),var(--accent-2));margin-top:30px}
+    /* popup kecil */
+    #popup{position:fixed;right:20px;bottom:20px;background:var(--accent-1);color:#fff;padding:12px 16px;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,0.12);opacity:0;transform:translateY(12px);transition:all .35s}
+    @media (max-width:600px){.hero-content h1{font-size:1.6rem}.cart-modal{height:82vh}}
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="logo">SnackZone</div>
+    <div class="nav-right">
+      <a class="nav-link" href="#produk">Produk</a>
+      <button class="btn-cart" id="openCartBtn" aria-label="Buka Keranjang">
+        🛒 Keranjang <span class="cart-count" id="cartCount" style="display:none">0</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- HERO / BANNER -->
+  <header id="home">
+    <img class="hero-img" src="banner.png" alt="Banner SnackZone"> <!-- ganti banner.png jika perlu -->
+    <div class="hero-content">
+      <h1>SnackZone</h1>
+      <p>“Nikmatnya ngemil tanpa henti.”</p>
+      <button id="lihatProduk">Lihat Produk</button>
+    </div>
+  </header>
+
+  <!-- PRODUK -->
+  <section id="produk" class="produk-section">
+    <h2>Katalog Produk</h2>
+
+    <div class="kategori-filter" id="kategoriFilter">
+      <button class="kategori-btn active" data-kategori="semua">Semua</button>
+      <button class="kategori-btn" data-kategori="keripik">Keripik Ubi</button>
+      <button class="kategori-btn" data-kategori="makaroni">Makaroni</button>
+      <button class="kategori-btn" data-kategori="kuebawang">Kue Bawang</button>
+    </div>
+
+    <div class="produk-container" id="produkContainer"></div>
+  </section>
+
+  <footer>
+    © 2025 SnackZone — Nikmatnya ngemil tanpa henti.
+  </footer>
+
+  <!-- CART MODAL (BOTTOM SHEET) -->
+  <div class="cart-modal" id="cartModal" aria-hidden="true">
+    <div class="cart-header">
+      <h3>🛒 Keranjang Belanja</h3>
+      <div>
+        <button class="close-cart" id="closeCartBtn">Tutup</button>
+      </div>
+    </div>
+
+    <div class="cart-body" id="cartBody"></div>
+
+    <div class="cart-footer">
+      <div class="totals">
+        <div>Subtotal</div>
+        <div id="subtotalText">Rp0</div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;margin-top:6px">
+        <input type="number" id="ongkirInput" placeholder="Ongkir (misal 10000)" value="10000" style="padding:10px;border-radius:8px;border:1px solid #ddd;width:150px">
+        <div style="flex:1;text-align:right;font-weight:600">Total: <span id="totalText">Rp0</span></div>
+      </div>
+
+      <div class="checkout-form">
+        <input id="buyerName" placeholder="Nama penerima" />
+        <input id="buyerAddr" placeholder="Alamat lengkap (kota, kode pos)" />
+        <div class="checkout-actions">
+          <button class="btn-secondary" id="clearCartBtn">Kosongkan</button>
+          <button class="btn-primary" id="checkoutBtn">Checkout via WhatsApp</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="popup"></div>
+
+  <script>
+    // ===== CONFIG =====
+    const WA_NUMBER = "6287748558153"; // nomor admin & toko (format internasional tanpa +)
+
+    // produk sesuai permintaan: keripik 3, makaroni 5, kue bawang 2
+    const produkData = [
+      // Keripik (3)
+      {id:'k1', kategori:'keripik', nama:'Keripik Ubi Ungu', harga:35000, img:'ungu.png', deskripsi:'Renyah dan manis alami.'},
+      {id:'k2', kategori:'keripik', nama:'Keripik Ubi Gula Aren', harga:45000, img:'gula aren.png', deskripsi:'Rasa manis khas gula aren.'},
+      {id:'k3', kategori:'keripik', nama:'Keripik Ubi Original', harga:30000, img:'ubi ori.png', deskripsi:'Cita rasa gurih alami.'},
+      // Makaroni (5)
+      {id:'m1', kategori:'makaroni', nama:'Makaroni Pedas', harga:25000, img:'makaroni ori.png', deskripsi:'Pedas gurih daun jeruk.'},
+      {id:'m2', kategori:'makaroni', nama:'Makaroni Keju', harga:27000, img:'makaroni keju.png', deskripsi:'Rasa gurih keju creamy.'},
+      {id:'m3', kategori:'makaroni', nama:'Makaroni Balado', harga:28000, img:'makaroni balado.png', deskripsi:'Pedas nikmat bikin nagih.'},
+      {id:'m4', kategori:'makaroni', nama:'Makaroni Rumput Laut', harga:35000, img:'rumput laut.png', deskripsi:'Gurih dengan sensasi laut.'},
+      {id:'m5', kategori:'makaroni', nama:'Makaroni Jagung Manis', harga:25000, img:'makaroni jagung.png', deskripsi:'Rasa manis gurih kombinasi unik.'},
+      // Kue bawang (2)
+      {id:'b1', kategori:'kuebawang', nama:'Sistik Bawang', harga:35000, img:'sistik bawang.png', deskripsi:'Gurih tanpa pengawet.'},
+      {id:'b2', kategori:'kuebawang', nama:'Kue Bawang Pedas', harga:37000, img:'kue bawang pedas.png', deskripsi:'Pedas ringan gurih renyah.'}
+    ];
+
+    // ===== STATE =====
+    let cart = []; // {id, nama, harga, qty}
+    const produkContainer = document.getElementById('produkContainer');
+    const cartModal = document.getElementById('cartModal');
+    const cartBody = document.getElementById('cartBody');
+    const cartCountEl = document.getElementById('cartCount');
+    const subtotalText = document.getElementById('subtotalText');
+    const totalText = document.getElementById('totalText');
+    const ongkirInput = document.getElementById('ongkirInput');
+    const buyerName = document.getElementById('buyerName');
+    const buyerAddr = document.getElementById('buyerAddr');
+    const popup = document.getElementById('popup');
+
+    // helper formatting
+    function numberWithDot(x){ return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g,"."); }
+    function escapeHtml(text){ return String(text).replace(/[&<>"']/g, s=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[s])); }
+
+    // render produk
+    function renderProduk(kategori='semua'){
+      produkContainer.innerHTML='';
+      const list = kategori==='semua' ? produkData : produkData.filter(p=>p.kategori===kategori);
+      list.forEach(p=>{
+        const card = document.createElement('div');
+        card.className='produk-card';
+        card.innerHTML = `
+          <img src="${p.img}" alt="${escapeHtml(p.nama)}">
+          <h3>${escapeHtml(p.nama)}</h3>
+          <p>${escapeHtml(p.deskripsi)}</p>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">
+            <div class="price">Rp${numberWithDot(p.harga)}</div>
+            <div class="controls">
+              <input type="number" min="1" value="1" id="qty-${p.id}" class="qty" />
+              <button class="add-btn" data-id="${p.id}">Tambah</button>
+            </div>
+          </div>
+        `;
+        produkContainer.appendChild(card);
+        setTimeout(()=>card.classList.add('visible'),100);
+      });
+      // attach add handlers
+      document.querySelectorAll('.add-btn').forEach(btn=>{
+        btn.addEventListener('click', (e)=>{
+          const id = e.currentTarget.dataset.id;
+          const qtyEl = document.getElementById(`qty-${id}`);
+          const qty = Math.max(1, parseInt(qtyEl.value)||1);
+          tambahKeKeranjang(id, qty);
+        });
+      });
+    }
+
+    // tambah ke keranjang
+    function tambahKeKeranjang(id, qty=1){
+      const prod = produkData.find(p=>p.id===id);
+      if(!prod) return;
+      const found = cart.find(i=>i.id===id);
+      if(found) found.qty += qty;
+      else cart.push({id:prod.id,nama:prod.nama,harga:prod.harga,qty});
+      showPopup(`${prod.nama} ditambahkan (${qty})`);
+      updateCartUI();
+      openCart(); // buka modal setelah tambah
+    }
+
+    // update cart UI
+    function updateCartUI(){
+      const totalItems = cart.reduce((s,i)=>s+i.qty,0);
+      if(totalItems>0){ cartCountEl.style.display='inline-block'; cartCountEl.textContent=totalItems; }
+      else cartCountEl.style.display='none';
+
+      cartBody.innerHTML='';
+      if(cart.length===0){
+        cartBody.innerHTML = '<p style="text-align:center;color:#666;padding:20px">Keranjang kosong — tambahkan produk dulu.</p>';
+      } else {
+        cart.forEach((item,idx)=>{
+          const prod = produkData.find(p=>p.id===item.id) || {};
+          const div = document.createElement('div');
+          div.className='cart-item';
+          div.innerHTML = `
+            <img src="${prod.img||''}" alt="${escapeHtml(item.nama)}">
+            <div class="meta">
+              <b>${escapeHtml(item.nama)}</b>
+              <small>Rp${numberWithDot(item.harga)} / pcs</small>
+              <div class="sub">Subtotal: Rp${numberWithDot(item.harga * item.qty)}</div>
+              <div class="qty-controls">
+                <button class="icon-btn" data-act="dec" data-idx="${idx}">−</button>
+                <div style="min-width:36px;text-align:center">${item.qty}</div>
+                <button class="icon-btn" data-act="inc" data-idx="${idx}">+</button>
+                <button style="margin-left:8px;background:#ff6b6b;color:#fff;border:none;padding:6px;border-radius:8px;cursor:pointer" data-act="rm" data-idx="${idx}">Hapus</button>
+              </div>
+            </div>
+          `;
+          cartBody.appendChild(div);
+        });
+      }
+      updateTotals();
+      // attach handlers
+      cartBody.querySelectorAll('[data-act]').forEach(btn=>{
+        btn.addEventListener('click', (e)=>{
+          const act = e.currentTarget.dataset.act;
+          const i = parseInt(e.currentTarget.dataset.idx);
+          if(act==='inc'){ cart[i].qty++; updateCartUI(); }
+          else if(act==='dec'){ cart[i].qty = Math.max(1, cart[i].qty-1); updateCartUI(); }
+          else if(act==='rm'){ cart.splice(i,1); updateCartUI(); }
+        });
+      });
+    }
+
+    function updateTotals(){
+      const subtotal = cart.reduce((s,i)=>s + i.harga * i.qty, 0);
+      const ongkir = parseInt(ongkirInput.value)||0;
+      subtotalText.textContent = `Rp${numberWithDot(subtotal)}`;
+      totalText.textContent = `Rp${numberWithDot(subtotal + ongkir)}`;
+    }
+
+    // modal controls
+    const openCartBtn = document.getElementById('openCartBtn');
+    const closeCartBtn = document.getElementById('closeCartBtn');
+    openCartBtn.addEventListener('click', () => openCart());
+    closeCartBtn.addEventListener('click', () => closeCart());
+    function openCart(){ cartModal.classList.add('open'); cartModal.setAttribute('aria-hidden','false'); updateCartUI(); }
+    function closeCart(){ cartModal.classList.remove('open'); cartModal.setAttribute('aria-hidden','true'); }
+
+    document.getElementById('clearCartBtn').addEventListener('click', ()=>{
+      if(!confirm('Kosongkan keranjang?')) return;
+      cart = []; updateCartUI();
+    });
+
+    // ===== Checkout flow: copy to clipboard + open WA to admin =====
+    document.getElementById('checkoutBtn').addEventListener('click', async ()=>{
+      if(cart.length===0) return alert('Keranjang kosong!');
+      const name = buyerName.value.trim();
+      const addr = buyerAddr.value.trim();
+      if(!name || !addr) return alert('Isi nama dan alamat penerima dulu.');
+      const ongkir = parseInt(ongkirInput.value) || 0;
+      let subtotal = cart.reduce((s,i)=>s + i.harga * i.qty,0);
+      const total = subtotal + ongkir;
+
+      // plain text struk (untuk clipboard & WA message)
+      let struk = '';
+      struk += '🧾 STRUK PEMBELIAN - SnackZone\n';
+      struk += '────────────────────\n';
+      struk += `Nama : ${name}\n`;
+      struk += `Alamat: ${addr}\n`;
+      struk += '────────────────────\n';
+      cart.forEach(item => {
+        struk += `${item.nama} x${item.qty} = Rp${numberWithDot(item.harga * item.qty)}\n`;
+      });
+      struk += '────────────────────\n';
+      struk += `Subtotal: Rp${numberWithDot(subtotal)}\n`;
+      struk += `Ongkir: Rp${numberWithDot(ongkir)}\n`;
+      struk += `Total: Rp${numberWithDot(total)}\n`;
+      struk += `Tanggal: ${new Date().toLocaleString('id-ID')}\n`;
+      struk += '────────────────────\n';
+      struk += 'Terima kasih telah berbelanja di SnackZone!';
+
+      // 1) salin ke clipboard (plain text)
+      try{
+        await navigator.clipboard.writeText(struk);
+        showPopup('Struk disalin ke clipboard ✔');
+      } catch(e){
+        showPopup('Gagal menyalin otomatis — silakan salin manual setelah WA terbuka');
+      }
+
+      // 2) buka chat WA admin dengan pesan (encoded)
+      const waMessage = encodeURIComponent(struk);
+      const waUrl = `https://wa.me/${WA_NUMBER}?text=${waMessage}`;
+      // buka WA setelah sedikit delay agar popup muncul
+      setTimeout(()=> window.open(waUrl,'_blank'), 700);
+    });
+
+    // popup small helper
+    function showPopup(msg){
+      popup.textContent = msg;
+      popup.style.opacity = '1';
+      popup.style.transform = 'translateY(0)';
+      setTimeout(()=>{ popup.style.opacity = '0'; popup.style.transform = 'translateY(12px)'; },2800);
+    }
+
+    // filter buttons
+    document.querySelectorAll('.kategori-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        document.querySelectorAll('.kategori-btn').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        const k = btn.dataset.kategori;
+        renderProduk(k);
+        window.scrollTo({top: document.getElementById('produk').offsetTop - 60, behavior:'smooth'});
+      });
+    });
+
+    // tombol lihat produk
+    document.getElementById('lihatProduk').addEventListener('click', ()=> {
+      document.querySelector('#produk').scrollIntoView({behavior:'smooth'});
+    });
+
+    // recompute totals on ongkir change
+    ongkirInput.addEventListener('input', updateTotals);
+
+    // initial render
+    renderProduk('semua');
+    updateCartUI();
+
+    // (optional) localStorage helpers commented out - enable if ingin simpan keranjang saat reload
+    /*
+    function saveCartToStorage(){ localStorage.setItem('snackzone_cart', JSON.stringify(cart)); }
+    function loadCartFromStorage(){ const s = localStorage.getItem('snackzone_cart'); if(s){ cart = JSON.parse(s); updateCartUI(); } }
+    window.addEventListener('beforeunload', saveCartToStorage);
+    loadCartFromStorage();
+    */
+  </script>
+</body>
+</html>
